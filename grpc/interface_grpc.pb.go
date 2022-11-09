@@ -4,7 +4,7 @@
 // - protoc             v3.21.6
 // source: grpc/interface.proto
 
-package ping
+package handin_04
 
 import (
 	context "context"
@@ -18,86 +18,86 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// PingClient is the client API for Ping service.
+// EnterClient is the client API for Enter service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PingClient interface {
-	Ping(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
+type EnterClient interface {
+	Enter(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
 }
 
-type pingClient struct {
+type enterClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPingClient(cc grpc.ClientConnInterface) PingClient {
-	return &pingClient{cc}
+func NewEnterClient(cc grpc.ClientConnInterface) EnterClient {
+	return &enterClient{cc}
 }
 
-func (c *pingClient) Ping(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error) {
+func (c *enterClient) Enter(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error) {
 	out := new(Reply)
-	err := c.cc.Invoke(ctx, "/ping.ping/ping", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/handin_04.enter/enter", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PingServer is the server API for Ping service.
-// All implementations must embed UnimplementedPingServer
+// EnterServer is the server API for Enter service.
+// All implementations must embed UnimplementedEnterServer
 // for forward compatibility
-type PingServer interface {
-	Ping(context.Context, *Request) (*Reply, error)
-	mustEmbedUnimplementedPingServer()
+type EnterServer interface {
+	Enter(context.Context, *Request) (*Reply, error)
+	mustEmbedUnimplementedEnterServer()
 }
 
-// UnimplementedPingServer must be embedded to have forward compatible implementations.
-type UnimplementedPingServer struct {
+// UnimplementedEnterServer must be embedded to have forward compatible implementations.
+type UnimplementedEnterServer struct {
 }
 
-func (UnimplementedPingServer) Ping(context.Context, *Request) (*Reply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+func (UnimplementedEnterServer) Enter(context.Context, *Request) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Enter not implemented")
 }
-func (UnimplementedPingServer) mustEmbedUnimplementedPingServer() {}
+func (UnimplementedEnterServer) mustEmbedUnimplementedEnterServer() {}
 
-// UnsafePingServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PingServer will
+// UnsafeEnterServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to EnterServer will
 // result in compilation errors.
-type UnsafePingServer interface {
-	mustEmbedUnimplementedPingServer()
+type UnsafeEnterServer interface {
+	mustEmbedUnimplementedEnterServer()
 }
 
-func RegisterPingServer(s grpc.ServiceRegistrar, srv PingServer) {
-	s.RegisterService(&Ping_ServiceDesc, srv)
+func RegisterEnterServer(s grpc.ServiceRegistrar, srv EnterServer) {
+	s.RegisterService(&Enter_ServiceDesc, srv)
 }
 
-func _Ping_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Enter_Enter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PingServer).Ping(ctx, in)
+		return srv.(EnterServer).Enter(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ping.ping/ping",
+		FullMethod: "/handin_04.enter/enter",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PingServer).Ping(ctx, req.(*Request))
+		return srv.(EnterServer).Enter(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Ping_ServiceDesc is the grpc.ServiceDesc for Ping service.
+// Enter_ServiceDesc is the grpc.ServiceDesc for Enter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Ping_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ping.ping",
-	HandlerType: (*PingServer)(nil),
+var Enter_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "handin_04.enter",
+	HandlerType: (*EnterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ping",
-			Handler:    _Ping_Ping_Handler,
+			MethodName: "enter",
+			Handler:    _Enter_Enter_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

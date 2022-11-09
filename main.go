@@ -14,8 +14,8 @@ import (
 )
 
 func main() {
-	args1, _ := strconv.ParseInt(os.Args[1], 10, 32)
-	ownPort := int32(args1) + 5000 // go run .
+	arg1, _ := strconv.ParseInt(os.Args[1], 10, 32)
+	ownPort := int32(arg1) + 5000
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -30,12 +30,11 @@ func main() {
 	// Create listener tcp on port ownPort
 	list, err := net.Listen("tcp", fmt.Sprintf(":%v", ownPort))
 	if err != nil {
-		log.Fatalf("Failed to listen on port 9080: %v", err)
+		log.Fatalf("Failed to listen on port: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 	ping.RegisterPingServer(grpcServer, p)
 
-	// clients start listening to eachother
 	go func() {
 		if err := grpcServer.Serve(list); err != nil {
 			log.Fatalf("failed to server %v", err)
@@ -48,16 +47,13 @@ func main() {
 		if port == ownPort {
 			continue
 		}
-		// Creat a virtual RPC Client Connection on port  9080 WithInsecure (because  of http)
-		var conn *grpc.ClientConn
-		fmt.Printf("Trying to dial : %v\n", port)
-		conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock())
 
+		var conn *grpc.ClientConn
+		fmt.Printf("Trying to dial: %v\n", port)
+		conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
 			log.Fatalf("Could not connect: %s", err)
 		}
-
-		// Defer means: When this function returns, call this method (meaing, one main is done, close connection)
 		defer conn.Close()
 		c := ping.NewPingClient(conn)
 		p.clients[port] = c
@@ -65,9 +61,8 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		scanner.Scan()
+		p.sendPingToAll()
 	}
-
 }
 
 type peer struct {
@@ -91,8 +86,8 @@ func (p *peer) sendPingToAll() {
 	for id, client := range p.clients {
 		reply, err := client.Ping(p.ctx, request)
 		if err != nil {
-			fmt.Println("Something went wrong in sending pings")
+			fmt.Println("something went wrong")
 		}
-		fmt.Printf("Got reply from id %v: %v", id, reply.Amount)
+		fmt.Printf("Got reply from id %v: %v\n", id, reply.Amount)
 	}
 }

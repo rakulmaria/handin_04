@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package ping;
+option go_package = "https://github.com/rakulmaria/handin_04/ping";
+
+
+service ping {
+    rpc ping (Request) returns (Reply) {}
+}
+
+message Request {
+    int32 id = 1;
+}
+
+message Reply {
+    int32 id = 1;
+}

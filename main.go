@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// Create listener tcp on port ownPort
-	list, err := net.Listen("tcp", fmt.Sprintf(":%v", ownPort))
+	list, err := net.Listen("tcp", "localhost"+fmt.Sprintf(":%v", ownPort))
 	if err != nil {
 		log.Fatalf("Failed to listen on port: %v", err)
 	}

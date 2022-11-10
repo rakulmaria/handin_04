@@ -14,9 +14,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-// our critical section is a counter. starts at 0
-var counter = 0
-
 func main() {
 	arg1, _ := strconv.ParseInt(os.Args[1], 10, 32)
 	ownPort := int32(arg1) + 5000
@@ -45,6 +42,7 @@ func main() {
 		}
 	}()
 
+	// Skakl nok fixes til at flere end tre kan være med eller?
 	for i := 0; i < 3; i++ {
 		port := int32(5000) + int32(i)
 
@@ -73,38 +71,37 @@ type peer struct {
 	recieve.UnimplementedRecieveServer
 	id               int32
 	lamport          int32
-	isUsing          bool
 	amountOfRequests map[int32]int32
-	deferQueue       []int32
 	state            State
 	clients          map[int32]recieve.RecieveClient
 	ctx              context.Context
-	channel          chan recieve.Request
 }
 
 func (p *peer) Recieve(ctx context.Context, req *recieve.Request) (*recieve.Reply, error) {
 	id := req.Id
-	p.lamport = req.Lamport;
+	if(p.lamport < req.Lamport) { p.lamport = req.Lamport; }
 	p.lamport++;
-	fmt.Printf("peer with id: %v now has lamportclock: %v",id,p.lamport)
+	fmt.Println("In Receive-method")
+	fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
 	
 	p.amountOfRequests[id] += 1
 	// check if you sent a request yourself && check if you are in the critical section.
 	// in case you are requesting at the same time as the other, the one with the smallest lamport ts wins
 	// otherwise, you defer the request
-	if p.state == "held" || (p.state == "wanted" && (req.Lamport > p.lamport)) {
+	if p.state == held || (p.state == wanted && (req.Lamport > p.lamport)) {
 		//p.deferQueue = append(p.deferQueue, req.Id)
-		fmt.Print("State held or wanted with smallest lamport")
+		fmt.Print("State held or wanted with smallest lamport\n")
 		time.Sleep(5 * time.Second)
 		reply := p.Exit()
 		fmt.Println("Released")
-		p.lamport++;
-		fmt.Printf("peer with id: %v now has lamportclock: %v",id,p.lamport)
+		fmt.Println("In Receive-method - if")
+		fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
 		return reply, nil
 	} else {
 		fmt.Printf("you take it person with id: %v", id)
+		fmt.Println("In Receive-method - else")
+		fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
 		p.lamport++;
-		fmt.Printf("peer with id: %v now has lamportclock: %v",id,p.lamport)
 		rep := &recieve.Reply{Id: p.amountOfRequests[id]}
 		return rep, nil
 	}
@@ -112,30 +109,33 @@ func (p *peer) Recieve(ctx context.Context, req *recieve.Request) (*recieve.Repl
 
 func (p *peer) Enter() {
 	isAvailable := false
-	p.state = "wanted"
+	p.state = wanted
+	fmt.Println("In Enter-method")
+	fmt.Printf("peer with id: %v now has lamportclock: %v\n",p.id,p.lamport)
 	p.lamport++;
-	fmt.Printf("peer with id: %v now has lamportclock: %v",p.id,p.lamport)
 	request := &recieve.Request{Id: p.id, Lamport: p.lamport}
 	for _, client := range p.clients {
 		rep, err := client.Recieve(p.ctx, request)
-		p.lamport = rep.Lamport
+		if(p.lamport < rep.Lamport) { p.lamport = rep.Lamport; }
 		p.lamport++;
-		fmt.Printf("peer with id: %v now has lamportclock: %v",p.id,p.lamport)
+		fmt.Printf("peer with id: %v now has lamportclock: %v\n",p.id,p.lamport)
 		if err != nil {
 			fmt.Println("something went wrong")
 		}
 	}
-	fmt.Printf("recieved message from everone. Person with id: %v now has the thing", p.id)
+	fmt.Printf("recieved message from everone. Person with id: %v now has the thing\n", p.id)
 	isAvailable = true
 	//recieved all replies
 	if(isAvailable){
-		p.state = "held"
+		p.state = held
 	}
 }
 
 func (p *peer) Exit()(*recieve.Reply){
-	fmt.Printf("peer with id: %v exited the thing", p.id)
-	p.state = "realeased"
+	fmt.Println("In Exit-method")
+	fmt.Printf("peer with id: %v exited the thing\n", p.id)
+	p.state = released
+	p.lamport++;
 	rep := &recieve.Reply{Id: p.id, Lamport: p.lamport}
 	return rep
 }

@@ -4,9 +4,8 @@ package handin_04;
 option go_package = "https://github.com/rakulmaria/handin_04;handin_04";
 
 
-service recieve {
-    rpc recieve (Request) returns (Reply) {}
-    rpc reply (Empty) returns (Reply) {}
+service receive {
+    rpc receive (Request) returns (Reply) {}
 }
 
 message Empty{}

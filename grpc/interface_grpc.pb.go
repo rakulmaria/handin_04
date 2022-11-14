@@ -18,122 +18,86 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// RecieveClient is the client API for Recieve service.
+// ReceiveClient is the client API for Receive service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type RecieveClient interface {
-	Recieve(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
-	Reply(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Reply, error)
+type ReceiveClient interface {
+	Receive(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
 }
 
-type recieveClient struct {
+type receiveClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewRecieveClient(cc grpc.ClientConnInterface) RecieveClient {
-	return &recieveClient{cc}
+func NewReceiveClient(cc grpc.ClientConnInterface) ReceiveClient {
+	return &receiveClient{cc}
 }
 
-func (c *recieveClient) Recieve(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error) {
+func (c *receiveClient) Receive(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error) {
 	out := new(Reply)
-	err := c.cc.Invoke(ctx, "/handin_04.recieve/recieve", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/handin_04.receive/receive", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *recieveClient) Reply(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Reply, error) {
-	out := new(Reply)
-	err := c.cc.Invoke(ctx, "/handin_04.recieve/reply", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// RecieveServer is the server API for Recieve service.
-// All implementations must embed UnimplementedRecieveServer
+// ReceiveServer is the server API for Receive service.
+// All implementations must embed UnimplementedReceiveServer
 // for forward compatibility
-type RecieveServer interface {
-	Recieve(context.Context, *Request) (*Reply, error)
-	Reply(context.Context, *Empty) (*Reply, error)
-	mustEmbedUnimplementedRecieveServer()
+type ReceiveServer interface {
+	Receive(context.Context, *Request) (*Reply, error)
+	mustEmbedUnimplementedReceiveServer()
 }
 
-// UnimplementedRecieveServer must be embedded to have forward compatible implementations.
-type UnimplementedRecieveServer struct {
+// UnimplementedReceiveServer must be embedded to have forward compatible implementations.
+type UnimplementedReceiveServer struct {
 }
 
-func (UnimplementedRecieveServer) Recieve(context.Context, *Request) (*Reply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Recieve not implemented")
+func (UnimplementedReceiveServer) Receive(context.Context, *Request) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Receive not implemented")
 }
-func (UnimplementedRecieveServer) Reply(context.Context, *Empty) (*Reply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Reply not implemented")
-}
-func (UnimplementedRecieveServer) mustEmbedUnimplementedRecieveServer() {}
+func (UnimplementedReceiveServer) mustEmbedUnimplementedReceiveServer() {}
 
-// UnsafeRecieveServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to RecieveServer will
+// UnsafeReceiveServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ReceiveServer will
 // result in compilation errors.
-type UnsafeRecieveServer interface {
-	mustEmbedUnimplementedRecieveServer()
+type UnsafeReceiveServer interface {
+	mustEmbedUnimplementedReceiveServer()
 }
 
-func RegisterRecieveServer(s grpc.ServiceRegistrar, srv RecieveServer) {
-	s.RegisterService(&Recieve_ServiceDesc, srv)
+func RegisterReceiveServer(s grpc.ServiceRegistrar, srv ReceiveServer) {
+	s.RegisterService(&Receive_ServiceDesc, srv)
 }
 
-func _Recieve_Recieve_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Receive_Receive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RecieveServer).Recieve(ctx, in)
+		return srv.(ReceiveServer).Receive(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/handin_04.recieve/recieve",
+		FullMethod: "/handin_04.receive/receive",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecieveServer).Recieve(ctx, req.(*Request))
+		return srv.(ReceiveServer).Receive(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Recieve_Reply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RecieveServer).Reply(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/handin_04.recieve/reply",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecieveServer).Reply(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// Recieve_ServiceDesc is the grpc.ServiceDesc for Recieve service.
+// Receive_ServiceDesc is the grpc.ServiceDesc for Receive service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Recieve_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "handin_04.recieve",
-	HandlerType: (*RecieveServer)(nil),
+var Receive_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "handin_04.receive",
+	HandlerType: (*ReceiveServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "recieve",
-			Handler:    _Recieve_Recieve_Handler,
-		},
-		{
-			MethodName: "reply",
-			Handler:    _Recieve_Reply_Handler,
+			MethodName: "receive",
+			Handler:    _Receive_Receive_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

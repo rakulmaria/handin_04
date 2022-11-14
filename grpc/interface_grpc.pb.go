@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RecieveClient interface {
 	Recieve(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
+	Reply(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Reply, error)
 }
 
 type recieveClient struct {
@@ -42,11 +43,21 @@ func (c *recieveClient) Recieve(ctx context.Context, in *Request, opts ...grpc.C
 	return out, nil
 }
 
+func (c *recieveClient) Reply(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Reply, error) {
+	out := new(Reply)
+	err := c.cc.Invoke(ctx, "/handin_04.recieve/reply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RecieveServer is the server API for Recieve service.
 // All implementations must embed UnimplementedRecieveServer
 // for forward compatibility
 type RecieveServer interface {
 	Recieve(context.Context, *Request) (*Reply, error)
+	Reply(context.Context, *Empty) (*Reply, error)
 	mustEmbedUnimplementedRecieveServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedRecieveServer struct {
 
 func (UnimplementedRecieveServer) Recieve(context.Context, *Request) (*Reply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Recieve not implemented")
+}
+func (UnimplementedRecieveServer) Reply(context.Context, *Empty) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Reply not implemented")
 }
 func (UnimplementedRecieveServer) mustEmbedUnimplementedRecieveServer() {}
 
@@ -88,6 +102,24 @@ func _Recieve_Recieve_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Recieve_Reply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecieveServer).Reply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/handin_04.recieve/reply",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecieveServer).Reply(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Recieve_ServiceDesc is the grpc.ServiceDesc for Recieve service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Recieve_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "recieve",
 			Handler:    _Recieve_Recieve_Handler,
+		},
+		{
+			MethodName: "reply",
+			Handler:    _Recieve_Reply_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

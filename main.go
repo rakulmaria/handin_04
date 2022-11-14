@@ -15,7 +15,14 @@ import (
 )
 
 func main() {
-	
+
+	//setting the log file
+	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
 	
 	arg1, _ := strconv.ParseInt(os.Args[1], 10, 32)
 	ownPort := int32(arg1) + 5000
@@ -54,6 +61,7 @@ func main() {
 
 		var conn *grpc.ClientConn
 		fmt.Printf("Trying to dial: %v\n", port)
+		log.Printf("Trying to dial: %v\n", port)
 		conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
 			log.Fatalf("Could not connect: %s", err)
@@ -67,6 +75,8 @@ func main() {
 	for scanner.Scan() {
 		p.Enter()
 	}
+
+	
 }
 
 type peer struct {
@@ -77,6 +87,8 @@ type peer struct {
 	state            State
 	clients          map[int32]recieve.RecieveClient
 	ctx              context.Context
+	deferQueue		 []int32
+
 }
 
 func (p *peer) Recieve(ctx context.Context, req *recieve.Request) (*recieve.Reply, error) {
@@ -85,62 +97,99 @@ func (p *peer) Recieve(ctx context.Context, req *recieve.Request) (*recieve.Repl
 	p.lamport++;
 	fmt.Println("In Receive-method")
 	fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
+	log.Printf("peer with id: %v now has lamportclock: %v and state: %v\n",id,p.lamport, p.state)
 	
 	p.amountOfRequests[id] += 1
 	// check if you sent a request yourself && check if you are in the critical section.
 	// in case you are requesting at the same time as the other, the one with the smallest lamport ts wins
 	// otherwise, you defer the request
 	if p.state == held || (p.state == wanted && (req.Lamport > p.lamport)) {
-		//p.deferQueue = append(p.deferQueue, req.Id)
-		fmt.Print("State held or wanted with smallest lamport\n")
-		time.Sleep(5 * time.Second)
-		reply := p.Exit()
-		fmt.Println("Released")
-		fmt.Println("In Receive-method - if")
-		fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
-		return reply, nil
+		p.deferQueue = append(p.deferQueue, req.Id)
+		log.Printf("Person with id: %v and state: %v is now in queue\n", p.id, p.state)
+
+		for peerId := range p.deferQueue  {
+			fmt.Printf("printing all in queue: %v",peerId)
+		}
+		// fmt.Print("State held or wanted with smallest lamport\n")
+		// time.Sleep(1 * time.Second)
+		// reply := p.Exit()
+		// fmt.Println("Released")
+		// fmt.Println("In Receive-method - if")
+		// fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
+		//return reply, nil
+		rep := &recieve.Reply{Id: 0, Lamport: 0};
+		return rep, nil;
 	} else {
-		fmt.Printf("you take it person with id: %v", id)
-		fmt.Println("In Receive-method - else")
-		fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
-		p.lamport++;
-		rep := &recieve.Reply{Id: p.amountOfRequests[id]}
-		return rep, nil
+		// fmt.Printf("you take it person with id: %v", id)
+		// fmt.Println("In Receive-method - else")
+		// fmt.Printf("peer with id: %v now has lamportclock: %v\n",id,p.lamport)
+		// p.lamport++;
+		// rep := &recieve.Reply{Id: p.amountOfRequests[id]}
+		// return rep, nil
+		rep,_ := p.clients[req.Id].Reply(ctx,&recieve.Empty{});
+		//call reply method
+
+		return rep, nil;
 	}
+}
+
+func (p *peer) Reply(ctx context.Context, in *recieve.Empty) (*recieve.Reply, error) {
+	rep := &recieve.Reply{Id: p.id, Lamport: p.lamport};
+	return rep, nil;
 }
 
 func (p *peer) Enter() {
-	isAvailable := false
 	p.state = wanted
-	fmt.Println("In Enter-method")
 	fmt.Printf("peer with id: %v now has lamportclock: %v\n",p.id,p.lamport)
+	log.Printf("peer with id: %v now has lamportclock: %v\n",p.id,p.lamport)
 	p.lamport++;
 	request := &recieve.Request{Id: p.id, Lamport: p.lamport}
 	for _, client := range p.clients {
-		rep, err := client.Recieve(p.ctx, request)
-		if(p.lamport < rep.Lamport) { p.lamport = rep.Lamport; }
+		reply := &recieve.Reply{};
+	
+		reply,_= client.Recieve(p.ctx, request)
+		if(reply.Id == 0 && reply.Lamport == 0){
+			time.Sleep(10*time.Second);
+			reply,_= client.Recieve(p.ctx, request)
+		}
+		
+		if(p.lamport < reply.Lamport) { p.lamport = reply.Lamport; }
 		p.lamport++;
 		fmt.Printf("peer with id: %v now has lamportclock: %v\n",p.id,p.lamport)
-		if err != nil {
-			fmt.Println("something went wrong")
-		}
+		log.Printf("peer with id: %v now has lamportclock: %v\n",p.id,p.lamport)
+	
 	}
 	fmt.Printf("recieved message from everone. Person with id: %v now has the thing\n", p.id)
-	isAvailable = true
+	log.Printf("recieved message from everone. Person with id: %v now has the thing\n", p.id)
 	//recieved all replies
-	if(isAvailable){
-		p.state = held
-	}
+	p.state = held
+	time.Sleep(5 * time.Second)
+	p.Exit();
 }
 
-func (p *peer) Exit()(*recieve.Reply){
+func (p *peer) Exit(){
+	//for all in queue call their reply
+	p.state = released
+	for peerId := range p.deferQueue  {
+		fmt.Printf("order of queue id: %v",peerId);
+		log.Printf("order of queue id: %v",peerId);
+		var client = p.clients[int32(peerId)];
+		if(client != nil){
+		p.clients[int32(peerId)].Reply(p.ctx,&recieve.Empty{});
+		} else {
+			fmt.Printf("client not found from queue")
+		}
+		p.deferQueue = p.deferQueue[0:]
+	}
+
 	fmt.Println("In Exit-method")
 	fmt.Printf("peer with id: %v exited the thing\n", p.id)
-	p.state = released
+	log.Printf("peer with id: %v and state: %v exited the thing\n", p.id, p.state)
+	
 	p.lamport++;
-	rep := &recieve.Reply{Id: p.id, Lamport: p.lamport}
-	return rep
+	//rep := &recieve.Reply{Id: p.id, Lamport: p.lamport}
 }
+
 
 
 // our enum for State

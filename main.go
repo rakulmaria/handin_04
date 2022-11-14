@@ -135,6 +135,7 @@ func (p *peer) Enter() {
 	//recieved all replies, updates it's state to held and enters the criticalsection represented as a boolean. stays there for five seconds
 	p.state = held
 	criticalSection = true
+	fmt.Println("Critical section is set to", criticalSection)
 	p.lamport++
 	fmt.Printf("**** Peer with id: %v entered the critical section with lamporttime: %v **** \n", p.id, p.lamport)
 	log.Printf("**** Peer with id: %v entered the critical section with lamporttime: %v ****", p.id, p.lamport)
@@ -147,6 +148,7 @@ func (p *peer) Exit() {
 	p.lamport++
 	p.state = released
 	criticalSection = false
+	fmt.Println("Critical section is set to", criticalSection)
 	fmt.Printf("---- Peer with id: %v exited the critical section with lamporttime: %v ---- \n", p.id, p.lamport)
 	log.Printf("---- Peer with id: %v exited the critical section with lamporttime: %v ----", p.id, p.lamport)
 }

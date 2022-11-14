@@ -51,6 +51,7 @@ func main() {
 		}
 	}()
 
+	// the peers connect to eachother
 	for i := 0; i < 3; i++ {
 		port := int32(5000) + int32(i)
 

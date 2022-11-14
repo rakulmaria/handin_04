@@ -31,10 +31,9 @@ func main() {
 	defer cancel()
 
 	p := &peer{
-		id:               ownPort,
-		amountOfRequests: make(map[int32]int32),
-		clients:          make(map[int32]receive.ReceiveClient),
-		ctx:              ctx,
+		id:      ownPort,
+		clients: make(map[int32]receive.ReceiveClient),
+		ctx:     ctx,
 	}
 
 	// Create listener tcp on port ownPort
@@ -82,13 +81,11 @@ func main() {
 
 type peer struct {
 	receive.UnimplementedReceiveServer
-	id               int32
-	lamport          int32
-	amountOfRequests map[int32]int32
-	state            State
-	clients          map[int32]receive.ReceiveClient
-	ctx              context.Context
-	deferQueue       []int32
+	id      int32
+	lamport int32
+	state   State
+	clients map[int32]receive.ReceiveClient
+	ctx     context.Context
 }
 
 // critical section represented by a boolean
